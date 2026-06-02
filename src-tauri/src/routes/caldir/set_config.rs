@@ -1,4 +1,5 @@
 use super::types::TimeFormat;
+use crate::event_cache::EVENT_CACHE;
 use crate::routes::TauResult;
 use caldir_core::{Caldir, Reminder, TimeFormat as CoreTimeFormat};
 
@@ -45,5 +46,11 @@ pub(super) async fn set_calendar_dir(path: String) -> TauResult<()> {
     let mut config = caldir.config().clone();
     config.set_data_dir(std::path::PathBuf::from(path));
     caldir.save_config(config).map_err(|e| e.to_string())?;
+
+    // The event cache is keyed by slug only, so entries from the previous
+    // directory would otherwise be served for same-named calendars in the new
+    // one. Clear it before returning so the next read re-parses from disk.
+    EVENT_CACHE.invalidate_all();
+
     Ok(())
 }
