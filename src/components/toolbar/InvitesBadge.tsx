@@ -9,6 +9,7 @@ import type { ResponseStatus, TimeFormat } from "@/rpc/bindings"
 
 import { useCalendars } from "@/contexts/CalendarStateContext"
 import { useSettings } from "@/contexts/SettingsContext"
+import { useSync } from "@/contexts/SyncContext"
 
 import { useBreakpoint } from "@/hooks/useBreakpoint"
 import { eventKey, rpcToCalendarEvent, type CalendarEvent } from "@/lib/cal-events"
@@ -30,7 +31,8 @@ export function InvitesBadge() {
   }, [calendars])
 
   const isMd = useBreakpoint("md")
-  const { timeFormat, autoSyncEnabled } = useSettings()
+  const { timeFormat } = useSettings()
+  const { requestSync } = useSync()
 
   if (invites.length === 0) return null
 
@@ -38,9 +40,7 @@ export function InvitesBadge() {
     setInvites((prev) => prev.filter((i) => eventKey(i) !== eventKey(invite)))
     try {
       await rpc.caldir.rsvp(invite.calendar_slug, invite.id, response)
-      if (autoSyncEnabled) {
-        await rpc.caldir.sync([])
-      }
+      void requestSync()
     } catch (e) {
       console.error("RSVP failed:", e)
     }
