@@ -14,9 +14,7 @@ pub(super) async fn handler(
     let range_start: DateTime<Utc> = start
         .parse()
         .map_err(|e: chrono::ParseError| e.to_string())?;
-    let range_end: DateTime<Utc> = end
-        .parse()
-        .map_err(|e: chrono::ParseError| e.to_string())?;
+    let range_end: DateTime<Utc> = end.parse().map_err(|e: chrono::ParseError| e.to_string())?;
 
     let caldir = Caldir::load().map_err(|e| e.to_string())?;
     let mut events = Vec::new();

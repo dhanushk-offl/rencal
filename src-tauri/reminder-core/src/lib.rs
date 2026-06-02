@@ -669,13 +669,19 @@ mod tests {
         // 09:00 local = 08:00 UTC, not at 09:00 UTC (= 10:00 local).
         let bst = FixedOffset::east_opt(3600).unwrap();
         let nine_am_floating = EventTime::DateTimeFloating(naive(2026, 7, 15, 9, 0));
-        assert_eq!(project_to_utc(&nine_am_floating, &bst), t(2026, 7, 15, 8, 0));
+        assert_eq!(
+            project_to_utc(&nine_am_floating, &bst),
+            t(2026, 7, 15, 8, 0)
+        );
     }
 
     #[test]
     fn floating_event_in_utc_host_round_trips() {
         let nine_am_floating = EventTime::DateTimeFloating(naive(2026, 7, 15, 9, 0));
-        assert_eq!(project_to_utc(&nine_am_floating, &Utc), t(2026, 7, 15, 9, 0));
+        assert_eq!(
+            project_to_utc(&nine_am_floating, &Utc),
+            t(2026, 7, 15, 9, 0)
+        );
     }
 
     #[test]

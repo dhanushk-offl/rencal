@@ -315,7 +315,11 @@ pub fn core_recurrence_to_rpc(r: &Recurrence) -> RpcRecurrence {
 }
 
 impl CalendarEvent {
-    pub fn from_event(e: &Event, calendar_slug: &str, master_recurrence: Option<RpcRecurrence>) -> Self {
+    pub fn from_event(
+        e: &Event,
+        calendar_slug: &str,
+        master_recurrence: Option<RpcRecurrence>,
+    ) -> Self {
         // If event has a recurrence_id, it's an instance of a recurring event
         // and the uid is the parent recurring event's ID
         let recurring_event_id = e.recurrence_id.as_ref().map(|_| e.uid.as_str().to_string());
@@ -346,14 +350,11 @@ impl CalendarEvent {
                 .iter()
                 .map(|r| r.minutes_before_start as i32)
                 .collect(),
-            organizer: e
-                .organizer
-                .as_ref()
-                .map(|o| EventAttendee {
-                    name: o.name.clone(),
-                    email: o.email.clone(),
-                    response_status: None,
-                }),
+            organizer: e.organizer.as_ref().map(|o| EventAttendee {
+                name: o.name.clone(),
+                email: o.email.clone(),
+                response_status: None,
+            }),
             attendees: e.attendees.iter().map(EventAttendee::from).collect(),
             conference_url: e.x_property("X-GOOGLE-CONFERENCE").map(String::from),
             calendar_slug: calendar_slug.to_string(),

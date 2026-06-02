@@ -25,10 +25,7 @@ pub(super) async fn get_default_reminders() -> TauResult<Vec<i32>> {
 
 pub(super) async fn get_default_calendar() -> TauResult<Option<String>> {
     let caldir = Caldir::load().map_err(|e| e.to_string())?;
-    Ok(caldir
-        .config()
-        .default_calendar_slug()
-        .map(String::from))
+    Ok(caldir.config().default_calendar_slug().map(String::from))
 }
 
 pub(super) async fn get_calendar_dir() -> TauResult<String> {

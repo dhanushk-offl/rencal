@@ -12,7 +12,7 @@ mod single_instance;
 use routes::caldir::{CaldirApi, CaldirApiImpl};
 use routes::config::{ConfigApi, ConfigApiImpl};
 use routes::omarchy::{OmarchyApi, OmarchyApiImpl};
-use routes::platform::{needs_native_decorations, PlatformApi, PlatformApiImpl};
+use routes::platform::{PlatformApi, PlatformApiImpl, needs_native_decorations};
 use tauri::Manager;
 use taurpc::Router;
 

@@ -6,6 +6,14 @@ default:
 install:
   pnpm install
 
+# Format files
+format:
+  @just format-rust
+
+[working-directory: 'src-tauri']
+format-rust:
+  cargo fmt --all
+
 # Generate app icons from 1024x1024 master.png
 icons:
   pnpm tauri icon src-tauri/icons/master.png
