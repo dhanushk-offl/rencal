@@ -1,4 +1,4 @@
-use super::helpers::event_time_sort_key;
+use super::helpers::{event_time_sort_key, is_visible};
 use super::types::CalendarEvent;
 use crate::event_cache::EVENT_CACHE;
 use crate::routes::TauResult;
@@ -20,6 +20,9 @@ pub(super) async fn handler(calendar_slugs: Vec<String>) -> TauResult<Vec<Calend
 
         let parsed = EVENT_CACHE.events(&caldir, slug)?;
         for event in parsed.iter() {
+            if !is_visible(event) {
+                continue;
+            }
             let is_future = event
                 .end
                 .as_ref()

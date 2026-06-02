@@ -1,4 +1,4 @@
-use super::helpers::event_time_sort_key;
+use super::helpers::{event_time_sort_key, is_visible};
 use super::types::{CalendarEvent, RpcRecurrence, core_recurrence_to_rpc};
 use crate::event_cache::EVENT_CACHE;
 use crate::routes::TauResult;
@@ -33,6 +33,9 @@ pub(super) async fn handler(
             .collect();
 
         for event in expand_in_range(parsed.iter().cloned(), range_start, range_end) {
+            if !is_visible(&event) {
+                continue;
+            }
             let master_rec = master_recurrences.get(event.uid.as_str()).cloned();
             events.push(CalendarEvent::from_event(&event, slug, master_rec));
         }

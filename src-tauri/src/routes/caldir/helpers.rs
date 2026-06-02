@@ -2,8 +2,12 @@ use super::types::{
     Calendar, CalendarEvent, ProviderField, ProviderFieldType, RpcEventTime, rpc_time_to_core,
 };
 use crate::routes::TauResult;
-use caldir_core::Caldir;
+use caldir_core::{Caldir, Event, Status};
 use chrono::{DateTime, Utc};
+
+pub fn is_visible(event: &Event) -> bool {
+    event.status != Status::Cancelled
+}
 
 /// Sort key that orders RpcEventTime values by their UTC instant.
 /// Unparseable values sort to the very end (treated as infinitely far away).
@@ -16,9 +20,7 @@ pub fn event_time_sort_key(w: &RpcEventTime) -> DateTime<Utc> {
 /// Sort calendar events so that events closest to now appear first.
 pub fn sort_by_proximity_to_now(events: &mut [CalendarEvent]) {
     let now = Utc::now().timestamp();
-    events.sort_by_key(|e| {
-        (event_time_sort_key(&e.start).timestamp() - now).unsigned_abs()
-    });
+    events.sort_by_key(|e| (event_time_sort_key(&e.start).timestamp() - now).unsigned_abs());
 }
 
 pub fn tildify(path: &str) -> String {
@@ -39,9 +41,7 @@ pub fn tildify(path: &str) -> String {
     path.to_string()
 }
 
-pub fn map_fields(
-    fields: Vec<caldir_core::rpc::CredentialField>,
-) -> Vec<ProviderField> {
+pub fn map_fields(fields: Vec<caldir_core::rpc::CredentialField>) -> Vec<ProviderField> {
     use caldir_core::rpc::FieldType;
     fields
         .into_iter()
@@ -99,4 +99,22 @@ pub async fn save_provider_calendars(
     }
 
     Ok(calendars)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use caldir_core::EventTime;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn confirmed_events_are_visible_cancelled_are_not() {
+        let start = EventTime::Date(NaiveDate::from_ymd_opt(2026, 5, 27).unwrap());
+        let confirmed = Event::new("Standup", start.clone());
+        let mut cancelled = Event::new("yolo", start);
+        cancelled.status = Status::Cancelled;
+
+        assert!(is_visible(&confirmed));
+        assert!(!is_visible(&cancelled));
+    }
 }

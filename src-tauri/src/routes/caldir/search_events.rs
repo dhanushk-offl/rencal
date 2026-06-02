@@ -1,4 +1,4 @@
-use super::helpers::sort_by_proximity_to_now;
+use super::helpers::{is_visible, sort_by_proximity_to_now};
 use super::types::CalendarEvent;
 use crate::event_cache::EVENT_CACHE;
 use crate::routes::TauResult;
@@ -15,6 +15,9 @@ pub(super) async fn handler(
     for slug in &calendar_slugs {
         let parsed = EVENT_CACHE.events(&caldir, slug)?;
         for event in parsed.iter() {
+            if !is_visible(event) {
+                continue;
+            }
             let summary_match = event
                 .summary
                 .as_deref()
