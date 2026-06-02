@@ -490,10 +490,10 @@ mod tests {
 
     fn make_event(uid: &str, start_utc: DateTime<Utc>, reminder_minutes: i64) -> Event {
         let mut event = Event::new(format!("Test {uid}"), EventTime::DateTimeUtc(start_utc));
-        event.set_end(EventTime::DateTimeUtc(start_utc + Duration::minutes(30)));
-        event.set_reminders(vec![Reminder {
+        event.end = Some(EventTime::DateTimeUtc(start_utc + Duration::minutes(30)));
+        event.reminders = vec![Reminder {
             minutes_before_start: reminder_minutes,
-        }]);
+        }];
         event.uid = EventUid::new(uid);
         event
     }

@@ -27,17 +27,11 @@ pub(super) async fn handler(input: CreateEventInput) -> TauResult<CalendarEvent>
         .collect();
 
     let mut event = Event::new(input.summary, start);
-    event.set_end(end);
-    if let Some(d) = input.description {
-        event.set_description(d);
-    }
-    if let Some(l) = input.location {
-        event.set_location(l);
-    }
-    if let Some(rec) = recurrence {
-        event.set_recurrence(rec);
-    }
-    event.set_reminders(reminders);
+    event.end = Some(end);
+    event.description = input.description;
+    event.location = input.location;
+    event.recurrence = recurrence;
+    event.reminders = reminders;
 
     let cal_event = calendar.create_event(event).map_err(|e| e.to_string())?;
     EVENT_CACHE.invalidate(&input.calendar_slug);
