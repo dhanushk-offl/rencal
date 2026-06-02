@@ -30,7 +30,7 @@ export function InvitesBadge() {
   }, [calendars])
 
   const isMd = useBreakpoint("md")
-  const { timeFormat } = useSettings()
+  const { timeFormat, autoSyncEnabled } = useSettings()
 
   if (invites.length === 0) return null
 
@@ -38,7 +38,9 @@ export function InvitesBadge() {
     setInvites((prev) => prev.filter((i) => eventKey(i) !== eventKey(invite)))
     try {
       await rpc.caldir.rsvp(invite.calendar_slug, invite.id, response)
-      await rpc.caldir.sync([])
+      if (autoSyncEnabled) {
+        await rpc.caldir.sync([])
+      }
     } catch (e) {
       console.error("RSVP failed:", e)
     }

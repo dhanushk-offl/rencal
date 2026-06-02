@@ -39,7 +39,7 @@ export function useSync() {
 
 export function SyncProvider({ children }: { children: ReactNode }) {
   const { calendars } = useCalendars()
-  const { autoSyncEnabled } = useSettings()
+  const { autoSyncEnabled, settingsLoaded } = useSettings()
 
   const [isChecking, setIsChecking] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
@@ -147,19 +147,20 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
+    if (!settingsLoaded) return
     void runSync(autoSyncEnabled)
-  }, [runSync, autoSyncEnabled])
+  }, [runSync, autoSyncEnabled, settingsLoaded])
 
   useEffect(() => {
     const unlisten = getCurrentWindow().onFocusChanged(({ payload: focused }) => {
-      if (focused) {
+      if (focused && settingsLoaded) {
         void runSync(autoSyncEnabled)
       }
     })
     return () => {
       unlisten.then((fn) => fn())
     }
-  }, [runSync, autoSyncEnabled])
+  }, [runSync, autoSyncEnabled, settingsLoaded])
 
   const value = useMemo<SyncContextType>(
     () => ({

@@ -25,6 +25,8 @@ interface SettingsContextType {
   setNotificationsEnabled: (enabled: boolean) => Promise<void>
   autoSyncEnabled: boolean
   setAutoSyncEnabled: (enabled: boolean) => Promise<void>
+  // False until persisted settings load, so startup consumers don't act on defaults.
+  settingsLoaded: boolean
 }
 
 const SettingsContext = createContext({} as SettingsContextType)
@@ -40,6 +42,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [calendarDir, setCalendarDirState] = useState<string>("")
   const [notificationsEnabled, setNotificationsEnabledState] = useState<boolean>(true)
   const [autoSyncEnabled, setAutoSyncEnabledState] = useState<boolean>(true)
+  const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false)
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -58,6 +61,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setCalendarDirState(dir)
         setNotificationsEnabledState(notifs)
         setAutoSyncEnabledState(autoSync)
+        setSettingsLoaded(true)
       } catch (e) {
         console.error(e)
       }
@@ -145,6 +149,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setNotificationsEnabled,
         autoSyncEnabled,
         setAutoSyncEnabled,
+        settingsLoaded,
       }}
     >
       {children}
