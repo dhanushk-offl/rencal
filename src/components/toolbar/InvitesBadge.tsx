@@ -11,7 +11,7 @@ import { useCalendars } from "@/contexts/CalendarStateContext"
 import { useSettings } from "@/contexts/SettingsContext"
 
 import { useBreakpoint } from "@/hooks/useBreakpoint"
-import { rpcToCalendarEvent, type CalendarEvent } from "@/lib/cal-events"
+import { eventKey, rpcToCalendarEvent, type CalendarEvent } from "@/lib/cal-events"
 import { formatTime, toInteropDate } from "@/lib/event-time"
 import { cn } from "@/lib/utils"
 
@@ -35,7 +35,7 @@ export function InvitesBadge() {
   if (invites.length === 0) return null
 
   const handleRsvp = async (invite: CalendarEvent, response: ResponseStatus) => {
-    setInvites((prev) => prev.filter((i) => i.id !== invite.id))
+    setInvites((prev) => prev.filter((i) => eventKey(i) !== eventKey(invite)))
     try {
       await rpc.caldir.rsvp(invite.calendar_slug, invite.id, response)
       await rpc.caldir.sync([])
@@ -57,7 +57,7 @@ export function InvitesBadge() {
         <div className="max-h-80 overflow-y-auto">
           {invites.map((invite) => (
             <InviteCard
-              key={invite.id}
+              key={eventKey(invite)}
               invite={invite}
               onRsvp={handleRsvp}
               timeFormat={timeFormat}

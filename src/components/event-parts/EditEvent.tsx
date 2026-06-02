@@ -43,7 +43,7 @@ export const EditEvent = ({
   children?: ReactNode
 }) => {
   const { calendars } = useCalendars()
-  const { setActiveEventId } = useCalEvents()
+  const { setActiveEventKey } = useCalEvents()
   const { requestSync } = useSync()
 
   const [dirtyEvent, setDirtyEvent] = useState<CalendarEvent | null>(null)
@@ -210,7 +210,7 @@ export const EditEvent = ({
         onRsvp={isAttendee ? handleRsvp : undefined}
         userResponseStatus={userResponseStatus}
         isPendingInvite={isPendingInvite}
-        onClose={() => setActiveEventId(null)}
+        onClose={() => setActiveEventKey(null)}
       />
 
       <DeleteConfirmDialog {...deleteDialogProps} />

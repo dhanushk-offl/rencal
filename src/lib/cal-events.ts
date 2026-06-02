@@ -28,6 +28,18 @@ export interface CalendarEvent
   master_recurrence: Recurrence | null
 }
 
+/**
+ * Stable, app-wide identity for an event. An event's `id`
+ * (`{uid}__{recurrence_id}` from the backend) is only unique *within* one
+ * calendar — the same series subscribed via two calendars (e.g. an Outlook
+ * account plus a WebCal mirror of it) yields two events with the same `id`.
+ * Namespacing by `calendar_slug` keeps identity unique everywhere it's used as a
+ * key: React list keys, infinite-scroll dedup, and the active-event tracker.
+ */
+export function eventKey(event: Pick<CalendarEvent, "id" | "calendar_slug">): string {
+  return `${event.calendar_slug}::${event.id}`
+}
+
 export function rpcToRecurrence(w: RpcRecurrence): Recurrence {
   return { rrule: w.rrule, exdates: w.exdates.map(fromRpcEventTime) }
 }

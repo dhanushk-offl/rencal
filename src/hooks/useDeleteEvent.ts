@@ -6,10 +6,10 @@ import { rpc } from "@/rpc"
 import { useCalEvents } from "@/contexts/CalEventsContext"
 import { useSync } from "@/contexts/SyncContext"
 
-import type { CalendarEvent } from "@/lib/cal-events"
+import { eventKey, type CalendarEvent } from "@/lib/cal-events"
 
 export function useDeleteEvent() {
-  const { setActiveEventId, setCalendarEvents } = useCalEvents()
+  const { setActiveEventKey, setCalendarEvents } = useCalEvents()
   const { requestSync } = useSync()
   const [targetEvent, setTargetEvent] = useState<CalendarEvent | null>(null)
 
@@ -25,9 +25,9 @@ export function useDeleteEvent() {
     const event = targetEvent
 
     // Optimistically remove from UI immediately
-    setCalendarEvents((prev) => prev.filter((e) => e.id !== event.id))
+    setCalendarEvents((prev) => prev.filter((e) => eventKey(e) !== eventKey(event)))
     setTargetEvent(null)
-    setActiveEventId(null)
+    setActiveEventKey(null)
 
     try {
       await rpc.caldir.delete_event(event.calendar_slug, event.id)
@@ -46,14 +46,19 @@ export function useDeleteEvent() {
     const parentId = targetEvent.recurring_event_id ?? targetEvent.id
     const calendarSlug = targetEvent.calendar_slug
 
+    // The series only exists in `calendarSlug`; scope the optimistic removal to
+    // that calendar so an identical series in another calendar isn't dropped too.
+    const isInSeries = (e: CalendarEvent) =>
+      e.calendar_slug === calendarSlug && (e.id === parentId || e.recurring_event_id === parentId)
+
     // Optimistically remove all events in the series from UI
     let removed: CalendarEvent[] = []
     setCalendarEvents((prev) => {
-      removed = prev.filter((e) => e.id === parentId || e.recurring_event_id === parentId)
-      return prev.filter((e) => e.id !== parentId && e.recurring_event_id !== parentId)
+      removed = prev.filter(isInSeries)
+      return prev.filter((e) => !isInSeries(e))
     })
     setTargetEvent(null)
-    setActiveEventId(null)
+    setActiveEventKey(null)
 
     try {
       await rpc.caldir.delete_recurring_series(calendarSlug, parentId)
