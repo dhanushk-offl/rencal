@@ -1,7 +1,8 @@
 import { addDays, subDays } from "date-fns"
-import { useRef } from "react"
+import { useRef, useState } from "react"
 import { useHotkeys } from "react-hotkeys-hook"
 
+import { ShortcutsOverlay } from "@/components/shortcuts/ShortcutsOverlay"
 import { openSettingsWindow } from "@/components/toolbar/SettingsButton"
 import { SEARCH_BUTTON_EL_ID } from "@/components/toolbar/search/SearchButton"
 import { SEARCH_INPUT_EL_ID } from "@/components/toolbar/search/SearchInput"
@@ -12,14 +13,58 @@ import { useEventDraft } from "@/contexts/EventDraftContext"
 
 import { useTheme } from "@/hooks/useTheme"
 import { CalendarView } from "@/lib/calendar-view"
+import { ShortcutBinding, ShortcutId, SHORTCUTS } from "@/lib/shortcuts"
 
 const NAV_THROTTLE_MS = 80
 
-export function useGlobalShortcuts({
+type ShortcutHandler = (e: KeyboardEvent) => void
+
+// Isolated so context updates in the shortcut handlers don't re-render <App />.
+export function GlobalShortcuts({
   onChangeCalendarView,
 }: {
   onChangeCalendarView: (view: CalendarView) => void
 }) {
+  const [overlayOpen, setOverlayOpen] = useState(false)
+
+  const handlers = useShortcutHandlers({
+    onChangeCalendarView,
+    openShortcutsOverlay: () => setOverlayOpen(true),
+  })
+
+  return (
+    <>
+      {SHORTCUTS.flatMap((shortcut) =>
+        shortcut.bindings.map((binding: ShortcutBinding) =>
+          binding.type === "char" ? (
+            <CharBindingHost
+              key={`${shortcut.id}:${binding.keys}`}
+              char={binding.keys}
+              allowShift={binding.allowShift}
+              onTrigger={handlers[shortcut.id]}
+            />
+          ) : (
+            <HotkeyBindingHost
+              key={`${shortcut.id}:${binding.keys}`}
+              keys={binding.keys}
+              onTrigger={handlers[shortcut.id]}
+            />
+          ),
+        ),
+      )}
+
+      <ShortcutsOverlay open={overlayOpen} onClose={() => setOverlayOpen(false)} />
+    </>
+  )
+}
+
+function useShortcutHandlers({
+  onChangeCalendarView,
+  openShortcutsOverlay,
+}: {
+  onChangeCalendarView: (view: CalendarView) => void
+  openShortcutsOverlay: () => void
+}): Record<ShortcutId, ShortcutHandler> {
   const { activeDate, navigateToDate } = useCalendarNavigation()
   const { setIsDrafting, setDefaultDraftEvent } = useEventDraft()
   const { canCreate, promptToConnect } = useCreateEventGate()
@@ -36,6 +81,7 @@ export function useGlobalShortcuts({
 
   const handleSearch = (e: KeyboardEvent) => {
     e.preventDefault()
+
     const input = document.getElementById(SEARCH_INPUT_EL_ID) as HTMLInputElement | null
 
     if (input) {
@@ -44,56 +90,62 @@ export function useGlobalShortcuts({
     }
 
     const button = document.getElementById(SEARCH_BUTTON_EL_ID) as HTMLButtonElement | null
-
     button?.click()
   }
 
-  // Focus search ("/" needs Shift on some layouts, e.g. AZERTY)
-  useCharHotkey("/", handleSearch, { allowShift: true })
-  useHotkeys("mod+f", handleSearch)
-  useHotkeys("mod+p", handleSearch)
-
-  // View switching
-  useCharHotkey("m", () => onChangeCalendarView("month"))
-  useCharHotkey("w", () => onChangeCalendarView("week"))
-
-  // Navigate to today
-  useCharHotkey("t", () => navigateToDate(new Date()))
-
-  // Navigate previous/next day (arrow keys are layout-independent)
-  useHotkeys("left", () => throttledNavigate(subDays(activeDate, 1)))
-  useHotkeys("right", () => throttledNavigate(addDays(activeDate, 1)))
-  useHotkeys("up", () => throttledNavigate(subDays(activeDate, 7)))
-  useHotkeys("down", () => throttledNavigate(addDays(activeDate, 7)))
-
-  // vim navigation:
-  useCharHotkey("h", () => throttledNavigate(subDays(activeDate, 1)))
-  useCharHotkey("l", () => throttledNavigate(addDays(activeDate, 1)))
-  useCharHotkey("k", () => throttledNavigate(subDays(activeDate, 7)))
-  useCharHotkey("j", () => throttledNavigate(addDays(activeDate, 7)))
-
-  // New event
-  useCharHotkey("c", (e) => {
+  const handleNewEvent = (e: KeyboardEvent) => {
     e.preventDefault()
+
     if (!canCreate) {
       promptToConnect()
       return
     }
+
     setDefaultDraftEvent()
     setIsDrafting(true)
-  })
+  }
 
-  // Open settings
-  useHotkeys("mod+comma", (e) => {
-    e.preventDefault()
-    void openSettingsWindow()
-  })
+  return {
+    today: () => void navigateToDate(new Date()),
+    "prev-day": () => throttledNavigate(subDays(activeDate, 1)),
+    "next-day": () => throttledNavigate(addDays(activeDate, 1)),
+    "prev-week": () => throttledNavigate(subDays(activeDate, 7)),
+    "next-week": () => throttledNavigate(addDays(activeDate, 7)),
+    month: () => onChangeCalendarView("month"),
+    week: () => onChangeCalendarView("week"),
+    search: handleSearch,
+    "new-event": handleNewEvent,
+    settings: (e) => {
+      e.preventDefault()
+      void openSettingsWindow()
+    },
+    "toggle-theme": (e) => {
+      e.preventDefault()
+      toggleTheme()
+    },
+    shortcuts: (e) => {
+      e.preventDefault()
+      openShortcutsOverlay()
+    },
+  }
+}
 
-  // Toggle theme (classic ↔ ren)
-  useHotkeys("mod+shift+t", (e) => {
-    e.preventDefault()
-    toggleTheme()
-  })
+function CharBindingHost({
+  char,
+  allowShift,
+  onTrigger,
+}: {
+  char: string
+  allowShift?: boolean
+  onTrigger: ShortcutHandler
+}) {
+  useCharHotkey(char, onTrigger, { allowShift })
+  return null
+}
+
+function HotkeyBindingHost({ keys, onTrigger }: { keys: string; onTrigger: ShortcutHandler }) {
+  useHotkeys(keys, onTrigger)
+  return null
 }
 
 // Single-character shortcuts must match the character the user *typed*, not the
@@ -106,7 +158,7 @@ export function useGlobalShortcuts({
 // relying on react-hotkeys-hook to suppress firing inside form fields.
 function useCharHotkey(
   char: string,
-  handler: (e: KeyboardEvent) => void,
+  handler: ShortcutHandler,
   { allowShift = false }: { allowShift?: boolean } = {},
 ) {
   useHotkeys(
