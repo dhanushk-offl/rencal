@@ -1,4 +1,4 @@
-import { useRef, ReactNode } from "react"
+import { KeyboardEventHandler, ReactNode, useRef } from "react"
 
 import { Command, CommandList } from "@/components/ui/command"
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group"
@@ -17,6 +17,11 @@ export function Combobox({
   open,
   setOpen,
   ghost = true,
+  readOnly = false,
+  disabled = false,
+  onInputKeyDown,
+  highlightedValue,
+  onHighlightChange,
 }: {
   addon: ReactNode
   children: ReactNode
@@ -26,8 +31,19 @@ export function Combobox({
   open: boolean
   setOpen: (open: boolean) => void
   ghost?: boolean
+  readOnly?: boolean
+  disabled?: boolean
+  onInputKeyDown?: KeyboardEventHandler<HTMLInputElement>
+  /**
+   * The option (by its `CommandItem` value) that cmdk should mark as selected.
+   * cmdk highlights it and scrolls it into view on open — useful for opening
+   * the list focused on the current value rather than the first item.
+   */
+  highlightedValue?: string
+  onHighlightChange?: (value: string) => void
 }) {
   const anchorRef = useRef<HTMLDivElement>(null)
+  const interactive = !readOnly && !disabled
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -35,14 +51,15 @@ export function Combobox({
         <div
           ref={anchorRef}
           className={cn(
-            "flex items-center hover:shadow-input-border rounded-md pr-3 group",
-            "focus-within:bg-secondary focus-within:shadow-none! cursor-text",
+            "flex items-center rounded-md pr-3 group",
+            interactive &&
+              "hover:shadow-input-border focus-within:bg-secondary focus-within:shadow-none! cursor-text",
             {
               "bg-secondary shadow-none!": open,
-              "shadow-input-border": !ghost,
+              "shadow-input-border": !ghost && interactive,
             },
           )}
-          onClick={() => setOpen(true)}
+          onClick={() => interactive && setOpen(true)}
         >
           <InputGroup className="border-none! bg-transparent!">
             {addon}
@@ -51,11 +68,14 @@ export function Combobox({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={placeholder}
-              onFocus={() => setOpen(true)}
+              onFocus={() => interactive && setOpen(true)}
+              onKeyDown={onInputKeyDown}
+              readOnly={readOnly}
+              disabled={disabled}
             />
           </InputGroup>
 
-          <DropdownArrow forceVisible={open || !ghost} />
+          {interactive && <DropdownArrow forceVisible={open || !ghost} />}
         </div>
       </PopoverAnchor>
       <PopoverContent
@@ -68,7 +88,7 @@ export function Combobox({
           }
         }}
       >
-        <Command>
+        <Command value={highlightedValue} onValueChange={onHighlightChange}>
           <CommandList>{children}</CommandList>
         </Command>
       </PopoverContent>
