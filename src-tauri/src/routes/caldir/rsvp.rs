@@ -10,23 +10,45 @@ pub(super) async fn handler(
     let caldir = Caldir::load().map_err(|e| e.to_string())?;
     let calendar = caldir.calendar(&calendar_slug).map_err(|e| e.to_string())?;
 
-    let email = calendar
+    let user_email = calendar
         .remote_email()
         .ok_or_else(|| "Calendar has no account email".to_string())?
         .to_string();
 
-    let id = EventInstanceId::from(event_id.as_str());
-    let mut cal_event = calendar
-        .event_by_instance_id(&id)
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| format!("Event not found: {}", event_id))?;
-
+    let instance_id = EventInstanceId::from(event_id.as_str());
     let status = parse_participation_status(&response)?;
 
-    cal_event
-        .update_attendee_status(&email, status)
-        .map_err(|e| e.to_string())?;
+    // Is recurring instance:
+    if instance_id.recurrence_id().is_some() {
+        let mut found = false;
+
+        calendar
+            .update_recurring_instance(&instance_id, |event| {
+                for attendee in &mut event.attendees {
+                    if attendee.email.eq_ignore_ascii_case(&user_email) {
+                        attendee.status = Some(status);
+                        found = true;
+                    }
+                }
+            })
+            .map_err(|e| e.to_string())?;
+
+        if !found {
+            return Err(format!("Attendee not found: {}", user_email));
+        }
+    } else {
+        let mut cal_event = calendar
+            .event_by_instance_id(&instance_id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| format!("Event not found: {}", event_id))?;
+
+        cal_event
+            .update_attendee_status(&user_email, status)
+            .map_err(|e| e.to_string())?;
+    }
+
     EVENT_CACHE.invalidate(&calendar_slug);
+
     Ok(())
 }
 

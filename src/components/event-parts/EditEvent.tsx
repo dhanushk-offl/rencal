@@ -144,23 +144,11 @@ export const EditEvent = ({
   const handleRsvp = async (response: ResponseStatus) => {
     if (!dirtyEvent) return
 
-    const previous = dirtyEvent
-
-    // Optimistically reflect the response in the UI
-    setDirtyEvent({
-      ...dirtyEvent,
-      attendees: dirtyEvent.attendees.map((a) =>
-        a.email.toLowerCase() === calendar?.account?.toLowerCase()
-          ? { ...a, response_status: response }
-          : a,
-      ),
-    })
-
     try {
-      await rpc.caldir.rsvp(previous.calendar_slug, previous.id, response)
+      await rpc.caldir.rsvp(dirtyEvent.calendar_slug, dirtyEvent.id, response)
       void requestSync()
+      setActiveEventKey(null)
     } catch (err) {
-      setDirtyEvent(previous)
       const message = err instanceof Error ? err.message : String(err)
       toast.error("Failed to respond to invite", { description: message })
       console.error("rsvp failed:", err)
