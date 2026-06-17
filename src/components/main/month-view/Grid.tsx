@@ -114,7 +114,9 @@ export function MonthGrid({
     prevScrollTopRef.current = null
   }, [virtualizer, rowHeight])
 
-  // During explicit navigation, scroll the active week into view if it's offscreen
+  // During explicit navigation, scroll the active week fully into view if needed.
+  // Scroll-follow updates activeDate without setting isNavigating, so this only runs for
+  // deliberate jumps such as clicks, shortcuts, and minical navigation.
   useEffect(() => {
     if (!hasInitialized.current || !isNavigating()) return
     const el = scrollRef.current
@@ -127,10 +129,7 @@ export function MonthGrid({
     if (item) {
       const viewStart = el.scrollTop
       const viewEnd = viewStart + el.clientHeight
-      // Skip if the week has any overlap with the viewport — user can already see the
-      // active date, so there's no need to yank. (A stricter "fully visible" check would
-      // fight scroll-follow, which sets activeDate to a day in a partially-visible week.)
-      if (item.start < viewEnd && item.start + item.size > viewStart) return
+      if (item.start >= viewStart && item.end <= viewEnd) return
     }
     virtualizer.scrollToIndex(weekIndex, { align: "start" })
   }, [activeDateKey, weeks, virtualizer, isNavigating, scrollRef])
@@ -200,12 +199,18 @@ export function MonthGrid({
         }
         if (bestKey !== activeKey) {
           const target = monthFirstDay.get(bestKey)
-          // If the 1st of bestKey isn't in view yet, wait for a later tick once the
-          // boundary week scrolls into the viewport.
+          // If the 1st of bestKey isn't in a fully visible row yet, wait for a later
+          // tick. Scroll-follow should never promote a half-clipped row to active.
           if (target) {
             const targetKey = formatDateKey(target)
             if (direction === "up" && targetKey > adk) return
             if (direction === "down" && targetKey < adk) return
+
+            const targetItem = v
+              .getVirtualItems()
+              .find((item) => w[item.index]?.some((day) => day.dateKey === targetKey))
+            if (!targetItem || targetItem.start < viewTop || targetItem.end > viewBottom) return
+
             onChange(target)
           }
         }
