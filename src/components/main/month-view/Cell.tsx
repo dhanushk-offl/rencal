@@ -1,4 +1,3 @@
-import { addHours, getHours, setHours, startOfDay, startOfHour } from "date-fns"
 import { useRef } from "react"
 
 import { MonthTimedEvent } from "@/components/events-blocks/month-view/TimedEventBlock"
@@ -11,14 +10,12 @@ import {
 
 import { useCalEvents } from "@/contexts/CalEventsContext"
 import { useCalendars } from "@/contexts/CalendarStateContext"
-import { useCreateEventGate } from "@/contexts/CreateEventGateContext"
-import { useEventDraft } from "@/contexts/EventDraftContext"
 
 import type { TimedEventItem } from "@/hooks/cal-events/useMonthEventLayout"
 import type { MonthDay } from "@/hooks/cal-events/useMonthGrid"
+import { useOpenDayDraft } from "@/hooks/useOpenDayDraft"
+import { ACTIVE_DAY_EL_ID, getLastEventEndTime } from "@/lib/active-day-draft"
 import { eventKey, type CalendarEvent } from "@/lib/cal-events"
-import { setDraftAnchor } from "@/lib/draft-anchor"
-import { fromDate, getLocalTzid, toViewerZonedDateTime } from "@/lib/event-time"
 import { isDeclinedEvent, isPendingEvent } from "@/lib/event-utils"
 import { cn } from "@/lib/utils"
 
@@ -52,47 +49,16 @@ export function MonthDayCell({
   dimmed,
 }: MonthDayCellProps) {
   const { calendars } = useCalendars()
-  const { setActiveEventKey } = useCalEvents()
-  const { setDraftEvent, setDraftPopoverOpen, setIsDrafting, defaultCalendarId } = useEventDraft()
-  const { canCreate, promptToConnect } = useCreateEventGate()
+  const { calendarEvents } = useCalEvents()
+  const openDayDraft = useOpenDayDraft()
   const contextTargetRef = useRef<HTMLElement | null>(null)
 
   const visibleTimed = timedEvents.slice(0, MAX_TIMED_VISIBLE)
   const hiddenTimedCount = timedEvents.length - visibleTimed.length
   const totalHidden = hiddenAllDayCount + hiddenTimedCount
 
-  const getStartHour = () => {
-    const lastEvent = timedEvents.at(-1)
-    if (lastEvent) return toViewerZonedDateTime(lastEvent.event.end).hour
-    return getHours(startOfHour(new Date()))
-  }
-
   const handleCreateEvent = (el: HTMLElement) => {
-    if (!canCreate) {
-      promptToConnect()
-      return
-    }
-    const startHour = getStartHour()
-    const startJs = setHours(startOfDay(day.date), startHour)
-    const endJs = addHours(startJs, 1)
-    const tzid = getLocalTzid()
-    const start = fromDate(startJs, tzid)
-    const end = fromDate(endJs, tzid)
-
-    setActiveEventKey(null)
-    setIsDrafting(false)
-    setDraftEvent({
-      summary: "",
-      description: null,
-      start,
-      end,
-      calendarId: defaultCalendarId,
-      location: null,
-      recurrence: null,
-      attendees: [],
-    })
-    setDraftAnchor(el)
-    setDraftPopoverOpen(true)
+    openDayDraft(day.date, el, { start: getLastEventEndTime(day.date, calendarEvents) })
   }
 
   return (
@@ -104,6 +70,7 @@ export function MonthDayCell({
             day.isWeekend && "bg-weekend",
             isActiveDay && "bg-accent",
           )}
+          id={isActiveDay ? ACTIVE_DAY_EL_ID : undefined}
           onClick={onClick}
           onContextMenu={(e) => {
             contextTargetRef.current = e.currentTarget

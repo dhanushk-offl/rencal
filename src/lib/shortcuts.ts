@@ -95,10 +95,16 @@ export const SHORTCUTS = [
     ],
   },
   {
-    id: "new-event",
+    id: "compose-event",
     group: "General",
-    label: "Compose event",
+    label: "Compose new event",
     bindings: [{ keys: "c", type: "char" }],
+  },
+  {
+    id: "add-event",
+    group: "General",
+    label: "Add event to selected day",
+    bindings: [{ keys: "a", type: "char" }],
   },
   {
     id: "settings",

@@ -19,7 +19,9 @@ import { useCalendarNavigation } from "@/contexts/CalendarStateContext"
 import { useCreateEventGate } from "@/contexts/CreateEventGateContext"
 import { useEventDraft } from "@/contexts/EventDraftContext"
 
+import { useOpenDayDraft } from "@/hooks/useOpenDayDraft"
 import { useTheme } from "@/hooks/useTheme"
+import { ACTIVE_DAY_EL_ID, getLastEventEndTime } from "@/lib/active-day-draft"
 import { CalendarView } from "@/lib/calendar-view"
 import { ShortcutBinding, ShortcutId, SHORTCUTS } from "@/lib/shortcuts"
 
@@ -75,10 +77,11 @@ function useShortcutHandlers({
 }): Record<ShortcutId, ShortcutHandler> {
   const { activeDate, navigateToDate } = useCalendarNavigation()
   const { setSelectedEventKey } = useAgendaSelection()
-  const { activeEvent } = useCalEvents()
+  const { activeEvent, calendarEvents } = useCalEvents()
   const { draftPopoverOpen, setIsDrafting, setDefaultDraftEvent } = useEventDraft()
   const { canCreate, promptToConnect } = useCreateEventGate()
   const { toggleTheme } = useTheme()
+  const openDayDraft = useOpenDayDraft()
 
   const lastNavRef = useRef(0)
 
@@ -112,7 +115,7 @@ function useShortcutHandlers({
     button?.click()
   }
 
-  const handleNewEvent = (e: KeyboardEvent) => {
+  const handleComposeEvent = (e: KeyboardEvent) => {
     e.preventDefault()
 
     if (!canCreate) {
@@ -122,6 +125,13 @@ function useShortcutHandlers({
 
     setDefaultDraftEvent()
     setIsDrafting(true)
+  }
+
+  const handleAddEventToActiveDay = (e: KeyboardEvent) => {
+    e.preventDefault()
+    const el = document.getElementById(ACTIVE_DAY_EL_ID)
+    if (!el) return
+    openDayDraft(activeDate, el, { start: getLastEventEndTime(activeDate, calendarEvents) })
   }
 
   return {
@@ -146,7 +156,8 @@ function useShortcutHandlers({
     month: () => onChangeCalendarView("month"),
     week: () => onChangeCalendarView("week"),
     search: handleSearch,
-    "new-event": handleNewEvent,
+    "compose-event": handleComposeEvent,
+    "add-event": handleAddEventToActiveDay,
     settings: (e) => {
       e.preventDefault()
       void openSettingsWindow()
