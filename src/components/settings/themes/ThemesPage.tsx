@@ -2,20 +2,38 @@ import { useTheme } from "@/hooks/useTheme"
 import { cn } from "@/lib/utils"
 
 import { CheckIcon } from "@/icons/check"
-import { themes, type ThemeId } from "@/themes/manifest"
+import { useThemeRegistry } from "@/themes/ThemeRegistry"
+import type { ThemeDescriptor } from "@/themes/manifest"
 
 export function ThemesPage() {
   const { theme, setTheme } = useTheme()
+  const { descriptors } = useThemeRegistry()
 
   return (
-    <div className="grid grid-cols-2 gap-3 max-w-[500px]">
+    <div className="flex flex-col gap-6 max-w-[500px]">
+      <ThemeGrid themes={descriptors} active={theme} onSelect={setTheme} />
+    </div>
+  )
+}
+
+function ThemeGrid({
+  themes,
+  active,
+  onSelect,
+}: {
+  themes: ThemeDescriptor[]
+  active: string
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3">
       {themes.map((t) => {
-        const isActive = theme === t.id
+        const isActive = active === t.id
 
         return (
           <button
             key={t.id}
-            onClick={() => setTheme(t.id as ThemeId)}
+            onClick={() => onSelect(t.id)}
             className={cn(
               "relative flex flex-col gap-2 p-3 rounded-md border-2 text-left transition-colors",
               isActive ? "border-primary" : "border-transparent hover:bg-secondary",
