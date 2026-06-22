@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=renCal
+Exec=rencal
+StartupWMClass=renCal
+X-GNOME-Autostart-enabled=true
+OnlyShowIn=Hyprland;GNOME;KDE;XFCE;Sway;river;

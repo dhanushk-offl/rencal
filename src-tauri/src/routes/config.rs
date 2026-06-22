@@ -13,6 +13,10 @@ pub trait ConfigApi {
     async fn set_notifications_enabled(enabled: bool) -> TauResult<()>;
     async fn get_auto_sync_enabled() -> TauResult<bool>;
     async fn set_auto_sync_enabled(enabled: bool) -> TauResult<()>;
+    async fn get_widget_enabled() -> TauResult<bool>;
+    async fn set_widget_enabled(enabled: bool) -> TauResult<()>;
+    async fn get_widget_position() -> TauResult<(Option<f64>, Option<f64>)>;
+    async fn set_widget_position(x: Option<f64>, y: Option<f64>) -> TauResult<()>;
 }
 
 #[derive(Clone)]
@@ -50,6 +54,28 @@ impl ConfigApi for ConfigApiImpl {
     async fn set_auto_sync_enabled(self, enabled: bool) -> TauResult<()> {
         let mut config = RencalConfig::load();
         config.auto_sync_enabled = enabled;
+        config.save()
+    }
+
+    async fn get_widget_enabled(self) -> TauResult<bool> {
+        Ok(RencalConfig::load().widget_enabled)
+    }
+
+    async fn set_widget_enabled(self, enabled: bool) -> TauResult<()> {
+        let mut config = RencalConfig::load();
+        config.widget_enabled = enabled;
+        config.save()
+    }
+
+    async fn get_widget_position(self) -> TauResult<(Option<f64>, Option<f64>)> {
+        let config = RencalConfig::load();
+        Ok((config.widget_x, config.widget_y))
+    }
+
+    async fn set_widget_position(self, x: Option<f64>, y: Option<f64>) -> TauResult<()> {
+        let mut config = RencalConfig::load();
+        config.widget_x = x;
+        config.widget_y = y;
         config.save()
     }
 }

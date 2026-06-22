@@ -18,6 +18,7 @@ import { SyncProvider } from "@/contexts/SyncContext"
 
 import { useBreakpoint } from "@/hooks/useBreakpoint"
 import { useCalendarView } from "@/hooks/useCalendarView"
+import { useWidgetWindow } from "@/hooks/useWidgetWindow"
 import { Preload } from "@/lib/preload-data"
 
 export function AppWindow({ preload }: { preload: Preload }) {
@@ -42,6 +43,8 @@ export function AppWindow({ preload }: { preload: Preload }) {
 
 function App() {
   const { calendarView, setCalendarView } = useCalendarView()
+
+  useWidgetWindow()
 
   const isMd = useBreakpoint("md")
 

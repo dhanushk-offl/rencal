@@ -138,6 +138,17 @@ install-notifierd: build-notifierd
   @echo
   systemctl --user status rencal-notifierd.service --no-pager --lines=0
 
+# Install the autostart .desktop entry (widget auto-launch on login)
+install-autostart:
+  mkdir -p ~/.config/autostart
+  cp src-tauri/assets/rencal.desktop ~/.config/autostart/rencal.desktop
+  @echo "Installed autostart entry to ~/.config/autostart/rencal.desktop"
+
+# Uninstall the autostart .desktop entry
+uninstall-autostart:
+  rm -f ~/.config/autostart/rencal.desktop
+  @echo "Removed autostart entry"
+
 # Remove the reminder daemon and its systemd unit
 uninstall-notifierd:
   -systemctl --user disable --now rencal-notifierd.service

@@ -104,7 +104,7 @@ export type UpdateEventInput = { id: string; calendar_slug: string;
  */
 new_calendar_slug: string | null; summary: string; description: string | null; location: string | null; start: RpcEventTime; end: RpcEventTime; recurrence: RpcRecurrence | null; reminders: number[]; attendees: EventAttendee[] }
 
-const ARGS_MAP = { 'caldir':'{"check_provider_connection":["provider_name","account"],"connect_provider":["provider_name"],"connect_provider_with_credentials":["provider_name","credentials"],"create_event":["input"],"create_local_calendar":["name","color"],"delete_event":["calendar_slug","event_id"],"delete_recurring_series":["calendar_slug","uid"],"discard":[],"get_calendar_dir":[],"get_default_calendar":[],"get_default_reminders":[],"get_event":["calendar_slug","event_id"],"get_provider_connect_info":["provider_name"],"get_time_format":[],"list_calendars":[],"list_events":["calendar_slugs","start","end"],"list_invites":["calendar_slugs"],"list_providers":[],"rsvp":["calendar_slug","event_id","response"],"search_events":["calendar_slugs","query"],"set_calendar_dir":["path"],"set_default_calendar":["slug"],"set_default_reminders":["minutes"],"set_time_format":["time_format"],"split_recurring_series_at":["input"],"sync":["allow_mass_delete"],"sync_preview":[],"update_event":["input"]}', 'config':'{"get_auto_sync_enabled":[],"get_notifications_enabled":[],"get_theme":[],"set_auto_sync_enabled":["enabled"],"set_notifications_enabled":["enabled"],"set_theme":["theme"]}', 'omarchy':'{"get_colors":[]}', 'platform':'{"needs_native_decorations":[]}', 'themes':'{"list_external":[]}' }
+const ARGS_MAP = { 'caldir':'{"check_provider_connection":["provider_name","account"],"connect_provider":["provider_name"],"connect_provider_with_credentials":["provider_name","credentials"],"create_event":["input"],"create_local_calendar":["name","color"],"delete_event":["calendar_slug","event_id"],"delete_recurring_series":["calendar_slug","uid"],"discard":[],"get_calendar_dir":[],"get_default_calendar":[],"get_default_reminders":[],"get_event":["calendar_slug","event_id"],"get_provider_connect_info":["provider_name"],"get_time_format":[],"list_calendars":[],"list_events":["calendar_slugs","start","end"],"list_invites":["calendar_slugs"],"list_providers":[],"rsvp":["calendar_slug","event_id","response"],"search_events":["calendar_slugs","query"],"set_calendar_dir":["path"],"set_default_calendar":["slug"],"set_default_reminders":["minutes"],"set_time_format":["time_format"],"split_recurring_series_at":["input"],"sync":["allow_mass_delete"],"sync_preview":[],"update_event":["input"]}', 'config':'{"get_auto_sync_enabled":[],"get_notifications_enabled":[],"get_theme":[],"get_widget_enabled":[],"get_widget_position":[],"set_auto_sync_enabled":["enabled"],"set_notifications_enabled":["enabled"],"set_theme":["theme"],"set_widget_enabled":["enabled"],"set_widget_position":["x","y"]}', 'omarchy':'{"get_colors":[]}', 'platform':'{"needs_native_decorations":[]}', 'themes':'{"list_external":[]}', 'widget':'{"create_widget_window":["width","height"],"destroy_widget_window":[],"set_widget_margins":["top","left"]}' }
 export type Router = { "caldir": {check_provider_connection: (providerName: string, account: string) => Promise<null>, 
 connect_provider: (providerName: string) => Promise<Calendar[]>, 
 connect_provider_with_credentials: (providerName: string, credentials: CredentialFieldInput[]) => Promise<Calendar[]>, 
@@ -136,12 +136,19 @@ update_event: (input: UpdateEventInput) => Promise<null>},
 "config": {get_auto_sync_enabled: () => Promise<boolean>, 
 get_notifications_enabled: () => Promise<boolean>, 
 get_theme: () => Promise<string | null>, 
+get_widget_enabled: () => Promise<boolean>, 
+get_widget_position: () => Promise<[number | null, number | null]>, 
 set_auto_sync_enabled: (enabled: boolean) => Promise<null>, 
 set_notifications_enabled: (enabled: boolean) => Promise<null>, 
-set_theme: (theme: string) => Promise<null>},
+set_theme: (theme: string) => Promise<null>, 
+set_widget_enabled: (enabled: boolean) => Promise<null>, 
+set_widget_position: (x: number | null, y: number | null) => Promise<null>},
 "omarchy": {get_colors: () => Promise<OmarchyColors | null>},
 "platform": {needs_native_decorations: () => Promise<boolean>},
-"themes": {list_external: () => Promise<ExternalTheme[]>} };
+"themes": {list_external: () => Promise<ExternalTheme[]>},
+"widget": {create_widget_window: (width: number, height: number) => Promise<null>, 
+destroy_widget_window: () => Promise<null>, 
+set_widget_margins: (top: number, left: number) => Promise<null>} };
 
 
 export const createTauRPCProxy = () => createProxy<Router>(ARGS_MAP)

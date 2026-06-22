@@ -15,6 +15,7 @@ use routes::config::{ConfigApi, ConfigApiImpl};
 use routes::omarchy::{OmarchyApi, OmarchyApiImpl};
 use routes::platform::{PlatformApi, PlatformApiImpl, needs_native_decorations};
 use routes::themes::{ThemesApi, ThemesApiImpl};
+use routes::widget::{WidgetApi, WidgetApiImpl};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 use tauri::Manager;
@@ -38,6 +39,7 @@ pub fn create_router() -> Router<tauri::Wry> {
         .merge(PlatformApiImpl.into_handler())
         .merge(ConfigApiImpl.into_handler())
         .merge(ThemesApiImpl.into_handler())
+        .merge(WidgetApiImpl.into_handler())
 }
 
 /// Resolve the bundled providers directory and remember it for `load_caldir`.

@@ -5,6 +5,7 @@ import { CalendarsPage } from "@/components/settings/calendars/CalendarsPage"
 import { GeneralPage } from "@/components/settings/general/GeneralPage"
 import { RemindersPage } from "@/components/settings/reminders/RemindersPage"
 import { ThemesPage } from "@/components/settings/themes/ThemesPage"
+import { WidgetsPage } from "@/components/settings/widgets/WidgetsPage"
 
 import { IconType } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -14,6 +15,7 @@ import { CalendarIcon } from "@/icons/calendar"
 import { PaletteIcon } from "@/icons/palette"
 import { SettingsIcon } from "@/icons/settings"
 import { UserIcon } from "@/icons/user"
+import { WidgetIcon } from "@/icons/widget"
 
 interface NavItem {
   tab: string
@@ -28,6 +30,7 @@ export const NAV_ITEMS = [
   { tab: "calendars" as const, label: "Calendars", icon: CalendarIcon, page: CalendarsPage },
   { tab: "reminders" as const, label: "Reminders", icon: BellIcon, page: RemindersPage },
   { tab: "themes" as const, label: "Themes", icon: PaletteIcon, page: ThemesPage },
+  { tab: "widgets" as const, label: "Widgets", icon: WidgetIcon, page: WidgetsPage },
 ] satisfies NavItem[]
 
 export type SettingsTab = (typeof NAV_ITEMS)[number]["tab"]

@@ -20,6 +20,10 @@ fn default_auto_sync_enabled() -> bool {
     true
 }
 
+fn default_widget_enabled() -> bool {
+    false
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RencalConfig {
     #[serde(default = "default_theme")]
@@ -28,6 +32,15 @@ pub struct RencalConfig {
     pub notifications_enabled: bool,
     #[serde(default = "default_auto_sync_enabled")]
     pub auto_sync_enabled: bool,
+    #[serde(default = "default_widget_enabled")]
+    pub widget_enabled: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub widget_x: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub widget_y: Option<f64>,
+    /// Incremented when the config layout changes. Used for one-time migrations.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub widget_placement_version: Option<u32>,
 }
 
 impl Default for RencalConfig {
@@ -36,6 +49,10 @@ impl Default for RencalConfig {
             theme: default_theme(),
             notifications_enabled: default_notifications_enabled(),
             auto_sync_enabled: default_auto_sync_enabled(),
+            widget_enabled: default_widget_enabled(),
+            widget_x: None,
+            widget_y: None,
+            widget_placement_version: None,
         }
     }
 }

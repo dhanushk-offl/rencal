@@ -14,6 +14,7 @@ import { preloadCalendarData } from "@/lib/preload-data"
 import { ThemeProvider } from "@/themes/ThemeRegistry"
 import { AppWindow } from "@/windows/AppWindow"
 import { SettingsWindow } from "@/windows/SettingsWindow"
+import { WidgetWindow } from "@/windows/WidgetWindow"
 
 const params = new URLSearchParams(window.location.search)
 const appWindow = params.get("appWindow")
@@ -33,7 +34,13 @@ async function bootstrap() {
             initialCalendars={preload.initialCalendars}
             initialDate={preload.initialDate}
           >
-            {appWindow === "settings" ? <SettingsWindow /> : <AppWindow preload={preload} />}
+            {appWindow === "settings" ? (
+              <SettingsWindow />
+            ) : appWindow === "widget" ? (
+              <WidgetWindow />
+            ) : (
+              <AppWindow preload={preload} />
+            )}
           </CalendarStateProvider>
         </SettingsProvider>
       </ThemeProvider>

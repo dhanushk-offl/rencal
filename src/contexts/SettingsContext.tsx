@@ -10,6 +10,7 @@ import {
   DEFAULT_REMINDERS_CHANGED,
   NOTIFICATIONS_ENABLED_CHANGED,
   TIME_FORMAT_CHANGED,
+  WIDGET_ENABLED_CHANGED,
 } from "@/rpc/events"
 
 interface SettingsContextType {
@@ -25,6 +26,8 @@ interface SettingsContextType {
   setNotificationsEnabled: (enabled: boolean) => Promise<void>
   autoSyncEnabled: boolean
   setAutoSyncEnabled: (enabled: boolean) => Promise<void>
+  widgetEnabled: boolean
+  setWidgetEnabled: (enabled: boolean) => Promise<void>
   reloadSettings: () => Promise<void>
   // False until persisted settings load, so startup consumers don't act on defaults.
   settingsLoaded: boolean
@@ -43,17 +46,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [calendarDir, setCalendarDirState] = useState<string>("")
   const [notificationsEnabled, setNotificationsEnabledState] = useState<boolean>(true)
   const [autoSyncEnabled, setAutoSyncEnabledState] = useState<boolean>(true)
+  const [widgetEnabled, setWidgetEnabledState] = useState<boolean>(false)
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false)
 
   const reloadSettings = useCallback(async () => {
     try {
-      const [tf, reminders, cal, dir, notifs, autoSync] = await Promise.all([
+      const [tf, reminders, cal, dir, notifs, autoSync, widget] = await Promise.all([
         rpc.caldir.get_time_format(),
         rpc.caldir.get_default_reminders(),
         rpc.caldir.get_default_calendar(),
         rpc.caldir.get_calendar_dir(),
         rpc.config.get_notifications_enabled(),
         rpc.config.get_auto_sync_enabled(),
+        rpc.config.get_widget_enabled(),
       ])
       setTimeFormatState(tf)
       setDefaultRemindersState(reminders)
@@ -61,6 +66,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setCalendarDirState(dir)
       setNotificationsEnabledState(notifs)
       setAutoSyncEnabledState(autoSync)
+      setWidgetEnabledState(widget)
       setSettingsLoaded(true)
     } catch (e) {
       console.error(e)
@@ -88,6 +94,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const unlistenAutoSync = listen<boolean>(AUTO_SYNC_ENABLED_CHANGED, (event) => {
       setAutoSyncEnabledState(event.payload)
     })
+    const unlistenWidget = listen<boolean>(WIDGET_ENABLED_CHANGED, (event) => {
+      setWidgetEnabledState(event.payload)
+    })
 
     return () => {
       unlistenTimeFormat.then((fn) => fn())
@@ -96,6 +105,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       unlistenCalendarDir.then((fn) => fn())
       unlistenNotifications.then((fn) => fn())
       unlistenAutoSync.then((fn) => fn())
+      unlistenWidget.then((fn) => fn())
     }
   }, [reloadSettings])
 
@@ -136,6 +146,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     await emit(AUTO_SYNC_ENABLED_CHANGED, enabled)
   }
 
+  const setWidgetEnabled = async (enabled: boolean) => {
+    setWidgetEnabledState(enabled)
+    await rpc.config.set_widget_enabled(enabled)
+    await emit(WIDGET_ENABLED_CHANGED, enabled)
+  }
+
   return (
     <SettingsContext.Provider
       value={{
@@ -151,6 +167,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         setNotificationsEnabled,
         autoSyncEnabled,
         setAutoSyncEnabled,
+        widgetEnabled,
+        setWidgetEnabled,
         reloadSettings,
         settingsLoaded,
       }}
